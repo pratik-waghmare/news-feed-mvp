@@ -1,27 +1,27 @@
-export type Post = {
-  id: string;
-  name: string;
-  createdAt: Date;
-  post: string;
-  likes: number;
-};
+import mongoose from "mongoose";
 
-export const posts: Post[] = Array.from({ length: 50 }).map((post, idx) => ({
-  id: "post-" + idx,
-  name: "Pratik",
-  createdAt: new Date(Date.now() - idx * 1000 * 60),
-  post: `Post ${idx}`,
-  likes: Math.floor(Math.random() * 100),
-}));
+const MONGODB_URI = process.env.MONGODB_URI as string;
 
-export const getPosts = (cursor: string | undefined, limit: number) => {
-  if (!cursor) {
-    return posts.slice(0, limit);
+if (!MONGODB_URI) {
+  throw new Error("Please define MONGODB_URI in .env.local");
+}
+
+// Global caching for hot reload / serverless
+let cached = globalThis._mongoose;
+
+if (!cached) {
+  cached = globalThis._mongoose = { conn: null, promise: null };
+}
+
+export const connectDB = async () => {
+  if (cached.conn) return cached.conn;
+
+  if (!cached.promise) {
+    cached.promise = mongoose.connect(MONGODB_URI, {
+      bufferCommands: false,
+    });
   }
 
-  const cursorIndex = posts.findIndex((post) => post.id === cursor);
-  const items = posts.slice(cursorIndex + 1, cursorIndex + 1 + limit);
-  const nextCursor = items.length ? items[items.length - 1].id : null;
-
-  return { items, nextCursor };
+  cached.conn = await cached.promise;
+  return cached.conn;
 };

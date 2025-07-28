@@ -1,4 +1,4 @@
-import { getPosts } from "newsfeed/lib/db";
+import { getPosts } from "newsfeed/lib/db_raw";
 import { NextResponse } from "next/server";
 
 export async function GET(req: Request) {
